@@ -33,38 +33,45 @@ const listStorage = new StableBTreeMap<string, VocubularyList>(1, 44, 512);
 
 //Create a Vocubulary List
 $update
-export function addVocubularyList(name: string): Result<VocubularyList, string>{
+export function addVocabularyList(name: string): Result<VocabularyList, string> {
     try {
-        const newVocubulary : VocubularyList = {
+        // Validate input
+        if (!name || typeof name !== "string") {
+            return Result.Err<VocabularyList, string>('Invalid name for creating Vocabulary List.');
+        }
+
+        const newVocabulary: VocabularyList = {
             id: uuidv4(),
             name,
-            words:[],
+            words: [],
             creator: ic.caller(),
             created_at: ic.time(),
             updated_at: Opt.None
-        }
-        listStorage.insert(newVocubulary.id, newVocubulary);
-        return Result.Ok<VocubularyList, string>(newVocubulary)
+        };
+
+        listStorage.insert(newVocabulary.id, newVocabulary);
+        return Result.Ok<VocabularyList, string>(newVocabulary);
     } catch (err) {
-        return Result.Err<VocubularyList, string>('Issue encountered when Creating Vocubulary List');
+        return Result.Err<VocabularyList, string>('Issue encountered when creating Vocabulary List.');
     }
 }
 
 // update a Vocubulary list 
-export function updateVocubularyList(id: string, name: string): Result<VocubularyList, string>{
-    return match(listStorage.get(id),{
+export function updateVocabularyList(id: string, name: string): Result<VocabularyList, string> {
+    return match(listStorage.get(id), {
         Some: (list) => {
-            // Authorization of user 
-            if (list.creator.toString() !== ic.caller().toString()) {
-                return Result.Err<VocubularyList, string>('You are not authorized to access Task');
+            // Authorization of user
+            if (!arePrincipalsEqual(list.creator, ic.caller())) {
+                return Result.Err<VocabularyList, string>('You are not authorized to update Vocabulary List.');
             }
-            const updatedList: VocubularyList = { ...list, name, updated_at: Opt.Some(ic.time()) };
+
+            const updatedList: VocabularyList = { ...list, name, updated_at: Opt.Some(ic.time()) };
             listStorage.insert(list.id, updatedList);
-            return Result.Ok<VocubularyList, string>(updatedList);
+            return Result.Ok<VocabularyList, string>(updatedList);
 
         },
-        None: () => Result.Err<VocubularyList, string>(`Vocubulary List with Id =${id} Not found`)
-    })
+        None: () => Result.Err<VocabularyList, string>(`Vocabulary List with Id=${id} not found`)
+    });
 }
 
 // Initialize the number of words to list
@@ -123,11 +130,18 @@ export function deleteListById(id: string): Result<string, string> {
 // add a word to a list
 $update
 export function addWordToList(id: string, payload: WordPayload): Result<Word, string> {
-    return match(listStorage.get(id),{
+    return match(listStorage.get(id), {
         Some: (list) => {
-            if (list.creator.toString() !== ic.caller().toString()){
-                return Result.Err<Word, string> ("Unauthorized access to Vocubulary list");
+            // Authorization check
+            if (!arePrincipalsEqual(list.creator, ic.caller())) {
+                return Result.Err<Word, string>('Unauthorized access to Vocabulary List.');
             }
+
+            // Validate payload
+            if (!payload || typeof payload !== "object") {
+                return Result.Err<Word, string>('Invalid payload for adding word to Vocabulary List.');
+            }
+
             const newWord: Word = {
                 id: uuidv4(),
                 word: payload.word,
@@ -136,24 +150,31 @@ export function addWordToList(id: string, payload: WordPayload): Result<Word, st
                 creator: ic.caller(),
                 created_at: ic.time(),
                 updated_at: Opt.None
-            }
+            };
             wordStorage.insert(newWord.id, newWord);
             list.words.push(newWord);
             listStorage.insert(list.id, list);
             return Result.Ok<Word, string>(newWord);
         },
-        None: () => Result.Err<Word, string>(`The List with id =${id} not available`)
-   })
+        None: () => Result.Err<Word, string>(`Vocabulary List with Id=${id} not found`)
+    });
 }
 
 // update a word in a list
 $update
 export function updateWordInList(listId: string, wordId: string, payload: WordPayload): Result<Word, string> {
-    return match(listStorage.get(listId),{
+    return match(listStorage.get(listId), {
         Some: (list) => {
-            if (list.creator.toString() !== ic.caller().toString()){
-                return Result.Err<Word, string> ("Unauthorized access to Vocubulary list");
+            // Authorization check
+            if (!arePrincipalsEqual(list.creator, ic.caller())) {
+                return Result.Err<Word, string>('Unauthorized access to Vocabulary List.');
             }
+
+            // Validate payload
+            if (!payload || typeof payload !== "object") {
+                return Result.Err<Word, string>('Invalid payload for updating word in Vocabulary List.');
+            }
+
             const updatedWord: Word = {
                 id: wordId,
                 word: payload.word,
@@ -162,7 +183,7 @@ export function updateWordInList(listId: string, wordId: string, payload: WordPa
                 creator: ic.caller(),
                 created_at: ic.time(),
                 updated_at: Opt.Some(ic.time())
-            }
+            };
             wordStorage.insert(updatedWord.id, updatedWord);
             list.words = list.words.map((word) => {
                 if (word.id === wordId) {
@@ -173,8 +194,8 @@ export function updateWordInList(listId: string, wordId: string, payload: WordPa
             listStorage.insert(list.id, list);
             return Result.Ok<Word, string>(updatedWord);
         },
-        None: () => Result.Err<Word, string>(`The List with id =${listId} not available`)
-   })
+        None: () => Result.Err<Word, string>(`Vocabulary List with Id=${listId} not found`)
+    });
 }
 
 // delete a word from a list
@@ -246,12 +267,18 @@ export function changeDifficultyOfWord(wordId: string, difficulty: nat64): Resul
    })
 }
 
+// Helper function to compare Principals
+//function arePrincipalsEqual(principal1: Principal, principal2: Principal): boolean {
+    //return principal1.toString() === principal2.toString();
+//}
+
 // get words by difficulty
 $query
 export function getWordsByDifficulty(difficulty: nat64): Result<Vec<Word>, string> {
     const words = wordStorage.values().filter((word) => word.difficulty === difficulty);
     return Result.Ok(words);
 }
+
 
 
 // UUID workaround
