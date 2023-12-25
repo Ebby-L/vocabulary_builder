@@ -1,0 +1,15 @@
+{
+    "canisters": {
+        "vocabulary_builder": {
+            "type": "custom",
+            "main": "src/index.ts",
+            "root": "src",
+            "ts": "src/index.ts",
+            "candid": "src/index.did",
+            "build": "npx azle vocabulary_builder",
+            "wasm": ".azle/vocabulary_builder/vocabulary_builder.wasm",
+            "gzip": true
+        }
+    }
+}
+

@@ -1,0 +1,22 @@
+{
+    "scripts": {
+        "dfx_install": "DFX_VERSION=0.15.1 sh -ci \"$(curl -fsSL https://sdk.dfinity.org/install.sh)\"",
+        "replica_start": "dfx start --background",
+        "replica_stop": "dfx stop",
+        "canister_deploy_local": "dfx deploy vocabulary_builder",
+        "canister_deploy_mainnet": "dfx deploy --network ic vocabulary_builder",
+        "canister_uninstall": "dfx canister uninstall-code vocabulary_builder",
+        "canister_call_get_message": "dfx canister call vocabulary_builder getMessage",
+        "canister_call_set_message": "dfx canister call vocabulary_builder setMessage '(\"Hello world!\")'"
+    },
+    "dependencies": {
+        "azle": "0.17.1",
+        "uuid": "^9.0.1",
+        "@dfinity/agent": "^0.15.6",
+        "@dfinity/candid": "^0.15.6"
+    },
+    "devDependencies": {
+        "@types/uuid": "^9.0.5"
+    }
+}
+

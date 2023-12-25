@@ -1,0 +1,39 @@
+type VocubularyList = record {
+  id : text;
+  updated_at : opt nat64;
+  creator : principal;
+  name : text;
+  created_at : nat64;
+  words : vec Word;
+};
+type Word = record {
+  id : text;
+  updated_at : opt nat64;
+  creator : principal;
+  meaning : text;
+  difficulty : nat64;
+  word : text;
+  created_at : nat64;
+};
+type WordPayload = record { meaning : text; difficulty : nat64; word : text };
+type _AzleResult = variant { Ok : VocubularyList; Err : text };
+type _AzleResult_1 = variant { Ok : Word; Err : text };
+type _AzleResult_2 = variant { Ok : float64; Err : text };
+type _AzleResult_3 = variant { Ok : text; Err : text };
+type _AzleResult_4 = variant { Ok : vec VocubularyList; Err : text };
+type _AzleResult_5 = variant { Ok : vec Word; Err : text };
+service : () -> {
+  addVocubularyList : (text) -> (_AzleResult);
+  addWordToList : (text, WordPayload) -> (_AzleResult_1);
+  changeDifficultyOfWord : (text, nat64) -> (_AzleResult_1);
+  countWordsInList : (text) -> (_AzleResult_2) query;
+  deleteListById : (text) -> (_AzleResult_3);
+  deleteWordFromList : (text, text) -> (_AzleResult_3);
+  getAllLists : () -> (_AzleResult_4) query;
+  getAllWords : () -> (_AzleResult_5) query;
+  getInitialWords : () -> (_AzleResult_5) query;
+  getListById : (text) -> (_AzleResult) query;
+  getWordFromList : (text, text) -> (_AzleResult_1) query;
+  getWordsByDifficulty : (nat64) -> (_AzleResult_5) query;
+  updateWordInList : (text, text, WordPayload) -> (_AzleResult_1);
+}
